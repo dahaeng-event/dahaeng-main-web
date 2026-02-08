@@ -119,8 +119,8 @@ export const LandingLogoIntro = () => {
             fill="#2a2722"
             stroke="#2a2722"
             strokeWidth={0.28}
-            strokeLinecap="butt"
-            strokeLinejoin="miter"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             initial={{
               pathLength: 0,
               pathOffset: logoPathSegment.pathOffset,
