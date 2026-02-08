@@ -1,0 +1,71 @@
+---
+globs: *.tsx
+alwaysApply: false
+---
+
+### React Hooks Guidelines
+
+- Avoid useEffect when possible.
+  - Prefer derived values in render; compute from props/state or memoize with useMemo.
+  - Put event-driven logic in event handlers, not effects.
+  - For async/data fetching, use Server Components when viable or a client data library (React Query/SWR) instead of manual effects.
+  - For DOM sync, prefer refs; only use layout/effects when strictly necessary.
+
+- If useEffect is required:
+  - Include all dependencies; do not omit to silence warnings.
+  - Return a cleanup function for subscriptions/timers.
+  - Avoid mirroring props to state; derive instead.
+  - Avoid unconditional setState on mount that can be derived.
+
+### TSX Conventions (Modern, Functional, Readable)
+
+- Prefer functional components only; avoid class components.
+- Use const for components, functions, and variables.
+- Enforce immutability.
+  - Do not mutate props or state directly.
+  - Avoid in-place array/object mutations (push/splice/sort/assign). Use spreads, non-mutating methods, or immutable helpers.
+- Derive state from props/state rather than duplicating it; keep render pure.
+- Keep components small and single-responsibility; extract subcomponents for complex views.
+
+### Props and Types
+
+- Define explicit props types (type Props = {...}) and annotate components (props: Props).
+- Avoid any; prefer precise types, generics, and discriminated unions for variants.
+- Make optional props explicit with ? and provide default values via parameter defaults.
+- Prefer ReadonlyArray<T> when mutation is not intended.
+
+### JSX and Styling
+
+- Keep JSX shallow; precompute complex expressions/conditions above the return.
+- Compose className with cn in grouped order: base/layout/size, then state/interaction.
+- With Tailwind, prefer shorthand utilities (e.g., m-5 over mx-5 my-5; size-5 over w-5 h-5).
+- Avoid inline styles except for truly dynamic values that Tailwind cannot express.
+
+### Lists and Keys
+
+- Use stable, data-derived keys (not array index). Ensure uniqueness across the list.
+- Extract list item components when rendering complex rows for readability and memoization.
+
+### Hooks and Memoization
+
+- Call hooks at top-level only; never inside conditions or loops.
+- Use useMemo for expensive derived values; use useCallback for handlers passed to memoized children.
+- Apply React.memo to leaf components that render frequently or in large lists; avoid blanket memoization.
+
+### Data Fetching and Side Effects
+
+- Prefer Server Components or a client data library (React Query/SWR) over manual effects.
+- Co-locate data concerns with components, but keep side-effects minimal and isolated.
+
+### React 19
+
+- Prefer recent code style based on React 19.
+- Never use legacy APIs or lifecycle methods.
+
+### Module Imports
+
+- Prefer named (direct) ESM imports or Type-only imports from source modules when importing from React.
+  - Example: `import { useState, useRef, useMemo, type ReactNode } from 'react'`.
+- Avoid default imports when importing from React.
+  - Example: `import React from 'react'`
+- Other imports do not have any restrictions.
