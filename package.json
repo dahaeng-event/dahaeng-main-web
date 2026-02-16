@@ -7,9 +7,9 @@
     "lint": "turbo run lint",
     "format": "prettier . --write --list-different",
     "check:all": "pnpm check:lint && pnpm check:prettier && pnpm check:type",
-    "check:lint": "turbo check:lint",
+    "check:lint": "turbo run lint",
     "check:prettier": "prettier . --check || exit 1",
-    "check:type": "turbo check:type"
+    "check:type": "turbo run check-types"
   },
   "devDependencies": {
     "prettier": "^3.7.4",

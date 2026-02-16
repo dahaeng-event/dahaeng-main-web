@@ -2,10 +2,17 @@
 
 import { motion } from "framer-motion";
 import type { Transition } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface LogoPathSegment {
   id: string;
   pathData: string;
+  pathOffset: number;
+}
+
+interface LogoPathSegmentSource {
+  id: string;
+  svgPath: string;
   pathOffset: number;
 }
 
@@ -36,56 +43,54 @@ const strokeOpacityKeyframes = fillProgressValues.map((value) =>
 );
 const fillKeyframeTimes = fillProgressValues;
 
-const logoPathSegments: ReadonlyArray<LogoPathSegment> = [
+const logoPathSegmentSources: ReadonlyArray<LogoPathSegmentSource> = [
   {
     id: "letter-d",
-    pathData:
-      "M6.29,2.52c-.62-.41-1.37-.65-2.17-.65v1.78c1.19,0,2.17,.97,2.17,2.17s-.97,2.17-2.17,2.17-2.17-.97-2.17-2.17H.18c0,2.17,1.77,3.94,3.94,3.94s3.94-1.77,3.94-3.94V0h-1.78V2.52Z",
+    svgPath: "/landing/logo-paths/letter-d.svg",
     pathOffset: 0.02,
   },
   {
     id: "letter-a-first",
-    pathData:
-      "M12.72,1.87c-2.17,0-3.94,1.77-3.94,3.94s1.77,3.94,3.94,3.94c.8,0,1.54-.24,2.17-.65v.61h1.78v-3.9c0-2.17-1.77-3.94-3.94-3.94Zm0,6.11c-1.19,0-2.17-.97-2.17-2.17s.97-2.17,2.17-2.17,2.17,.97,2.17,2.17-.97,2.17-2.17,2.17Z",
+    svgPath: "/landing/logo-paths/letter-a-first.svg",
     pathOffset: 0.66,
   },
   {
     id: "letter-h",
-    pathData:
-      "M21.63,1.87c-.8,0-1.54,.24-2.17,.65V0h-1.78V9.71h1.78v-3.9c0-1.19,.97-2.17,2.17-2.17s2.17,.97,2.17,2.17v3.9h1.78v-3.9c0-2.17-1.77-3.94-3.94-3.94Z",
+    svgPath: "/landing/logo-paths/letter-h.svg",
     pathOffset: 0.03,
   },
   {
     id: "letter-a-second",
-    pathData:
-      "M30.36,1.87c-2.17,0-3.94,1.77-3.94,3.94s1.77,3.94,3.94,3.94c.8,0,1.54-.24,2.17-.65v.61h1.78v-3.9c0-2.17-1.77-3.94-3.94-3.94Zm0,6.11c-1.19,0-2.17-.97-2.17-2.17s.97-2.17,2.17-2.17,2.17,.97,2.17,2.17-.97,2.17-2.17,2.17Z",
+    svgPath: "/landing/logo-paths/letter-a-second.svg",
     pathOffset: 0.66,
   },
   {
     id: "letter-e",
-    pathData:
-      "M39.15,1.88c-2.17,0-3.94,1.76-3.94,3.94s1.76,3.94,3.94,3.94v-1.77c-.88,0-1.64-.53-1.98-1.28h5.81c.07-.29,.1-.58,.1-.89,0-2.17-1.76-3.94-3.94-3.94Zm-1.98,3.05c.34-.75,1.1-1.28,1.98-1.28s1.64,.53,1.98,1.28h-3.95Z",
+    svgPath: "/landing/logo-paths/letter-e.svg",
     pathOffset: 0.54,
   },
   {
     id: "letter-n",
-    pathData:
-      "M47.94,1.87c-2.17,0-3.94,1.77-3.94,3.94v3.9h1.78v-3.9c0-1.19,.97-2.17,2.17-2.17s2.17,.97,2.17,2.17v3.9h1.78v-3.9c0-2.17-1.77-3.94-3.94-3.94Z",
+    svgPath: "/landing/logo-paths/letter-n.svg",
     pathOffset: 0.83,
   },
   {
     id: "letter-g-upper",
-    pathData:
-      "M56.72,1.87c-2.17,0-3.94,1.77-3.94,3.94s1.77,3.94,3.94,3.94v-1.78c-1.19,0-2.17-.97-2.17-2.17s.97-2.17,2.17-2.17,2.17,.97,2.17,2.17h1.78c0-2.17-1.77-3.94-3.94-3.94Z",
+    svgPath: "/landing/logo-paths/letter-g-upper.svg",
     pathOffset: 0.64,
   },
   {
     id: "letter-g-lower",
-    pathData:
-      "M56.72,14.42c-2.17,0-3.94-1.77-3.94-3.94h1.78c0,1.19,.97,2.17,2.17,2.17s2.17-.97,2.17-2.17h1.78c0,2.17-1.77,3.94-3.94,3.94Z",
+    svgPath: "/landing/logo-paths/letter-g-lower.svg",
     pathOffset: 0.04,
   },
 ];
+
+const extractPathData = (svgText: string) => {
+  const matchedPath = svgText.match(/<path[^>]*\sd=["']([^"']+)["']/);
+
+  return matchedPath?.[1] ?? "";
+};
 
 const createPropertyTransition = (
   times: ReadonlyArray<number>,
@@ -102,6 +107,55 @@ const createPropertyTransition = (
 };
 
 export const LandingLogoIntro = () => {
+  const [pathDataById, setPathDataById] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPathData = async () => {
+      const pathDataEntries = await Promise.all(
+        logoPathSegmentSources.map(async (source) => {
+          try {
+            const response = await fetch(source.svgPath);
+
+            if (!response.ok) {
+              return [source.id, ""] as const;
+            }
+
+            const svgText = await response.text();
+            return [source.id, extractPathData(svgText)] as const;
+          } catch {
+            return [source.id, ""] as const;
+          }
+        }),
+      );
+
+      if (!isMounted) {
+        return;
+      }
+
+      setPathDataById(Object.fromEntries(pathDataEntries));
+    };
+
+    void loadPathData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const logoPathSegments = logoPathSegmentSources
+    .map((source) => {
+      return {
+        id: source.id,
+        pathData: pathDataById[source.id] ?? "",
+        pathOffset: source.pathOffset,
+      };
+    })
+    .filter((segment): segment is LogoPathSegment => {
+      return segment.pathData.length > 0;
+    });
+
   return (
     <div className="mb-8 flex items-center justify-center sm:mb-10">
       <svg
